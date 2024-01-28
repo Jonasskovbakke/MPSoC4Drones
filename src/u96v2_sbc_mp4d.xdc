@@ -3,7 +3,7 @@
 
 # ----------------------------------------------------------------------------
 # Bluetooth
-# ---------------------------------------------------------------------------- 
+# ----------------------------------------------------------------------------
 #set_property -dict { PACKAGE_PIN B5		IOSTANDARD LVCMOS18   [get_ports {BT_HCI_CTS	}];  # "B5.BT_HCI_CTS"
 #set_property -dict { PACKAGE_PIN B7 	IOSTANDARD LVCMOS18   [get_ports {BT_HCI_RTS	}];  # "B7.BT_HCI_RTS"
 #set_property -dict { PACKAGE_PIN A9 	IOSTANDARD LVCMOS18   [get_ports {RADIO_LED0   	}];  # "A9.RADIO_LED0"
@@ -11,7 +11,7 @@
 
 # ----------------------------------------------------------------------------
 # High-speed expansion connector
-# ---------------------------------------------------------------------------- 
+# ----------------------------------------------------------------------------
 # Bank 65
 #set_property -dict { PACKAGE_PIN P1	IOSTANDARD LVCMOS12   [get_ports {CSI0_C_N      }];  # "P1.CSI0_C_N"
 #set_property -dict { PACKAGE_PIN N2	IOSTANDARD LVCMOS12   [get_ports {CSI0_C_P     	}];  # "N2.CSI0_C_P"
@@ -49,7 +49,7 @@
 
 # ----------------------------------------------------------------------------
 # Low-speed expansion connector
-# ---------------------------------------------------------------------------- 
+# ----------------------------------------------------------------------------
 # Bank 65
 #set_property -dict { PACKAGE_PIN D7	IOSTANDARD LVCMOS18 }  [get_ports {HD_GPIO_0    }];  # "D7.HD_GPIO_0"
 #set_property -dict { PACKAGE_PIN F8	IOSTANDARD LVCMOS18 }  [get_ports {HD_GPIO_1    }];  # "F8.HD_GPIO_1"
@@ -69,10 +69,10 @@
 #set_property -dict { PACKAGE_PIN C5	IOSTANDARD LVCMOS18 }  [get_ports {HD_GPIO_15   }];  # "C5.HD_GPIO_15"
 
 # ----------------------------------------------------------------------------
-# PS MIO - 
+# PS MIO -
 # For reference only - these are assigned in the FSBL
 # Pin Location and IOSTANDARD constraints are not necessary
-# ---------------------------------------------------------------------------- 
+# ----------------------------------------------------------------------------
 
 # J1 UART
 #set_property PACKAGE_PIN U4   [get_ports {MIO0_UART1_TX          }];  # "U4.MIO0_UART1_TX"
@@ -256,7 +256,7 @@
 
 # ----------------------------------------------------------------------------
 # USB Transceiver -- 26 MHz clock
-# ---------------------------------------------------------------------------- 
+# ----------------------------------------------------------------------------
 # Bank 505
 #set_property PACKAGE_PIN L20  [get_ports {U26M_N                 }];  # "L20.U26M_N"
 #set_property PACKAGE_PIN L19  [get_ports {U26M_P                 }];  # "L19.U26M_P"
@@ -271,7 +271,7 @@
 
 # ----------------------------------------------------------------------------
 # Display Port -- 27 MHz clock
-# ---------------------------------------------------------------------------- 
+# ----------------------------------------------------------------------------
 # Bank 505
 #set_property PACKAGE_PIN J20  [get_ports {U27M_N                 }];  # "J20.U27M_N"
 #set_property PACKAGE_PIN J19  [get_ports {U27M_P                 }];  # "J19.U27M_P"
@@ -287,3 +287,12 @@
 #set_property PACKAGE_PIN B21  [get_ports {GTR_LANE3_RX_P         }];  # "B21.GTR_LANE3_RX_P"
 #set_property PACKAGE_PIN A20  [get_ports {GTR_LANE3_TX_N         }];  # "A20.GTR_LANE3_TX_N"
 #set_property PACKAGE_PIN A19  [get_ports {GTR_LANE3_TX_P         }];  # "A19.GTR_LANE3_TX_P"
+
+set_property IOSTANDARD LVCMOS33 [get_ports led_ctrl1_0]
+set_property IOSTANDARD LVCMOS33 [get_ports led_ctrl2_0]
+set_property IOSTANDARD LVCMOS33 [get_ports led_ctrl3_0]
+set_property IOSTANDARD LVCMOS33 [get_ports led_ctrl4_0]
+set_property PACKAGE_PIN D7 [get_ports led_ctrl1_0]
+set_property PACKAGE_PIN F8 [get_ports led_ctrl2_0]
+set_property PACKAGE_PIN F7 [get_ports led_ctrl3_0]
+set_property PACKAGE_PIN G7 [get_ports led_ctrl4_0]

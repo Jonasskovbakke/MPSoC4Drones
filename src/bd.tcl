@@ -37,6 +37,13 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 # To test this script, run the following commands from Vivado Tcl console:
 # source u96v2_sbc_mp4d_script.tcl
 
+
+# The design that will be created by this Tcl script contains the following 
+# module references:
+# fix_address, nn_ctrl, not_gate
+
+# Please add the sources of those modules before sourcing this Tcl script.
+
 # If there is no project opened, this script will create a
 # project, but make sure you do not have an existing project
 # <./myproj/project_1.xpr> in the current working folder.
@@ -128,6 +135,7 @@ xilinx.com:ip:axi_bram_ctrl:4.1\
 xilinx.com:ip:blk_mem_gen:8.4\
 xilinx.com:ip:axi_intc:4.1\
 xilinx.com:ip:smartconnect:1.0\
+xilinx.com:hls:nn_inference:1.0\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:xlconcat:2.1\
 xilinx.com:ip:xlconstant:1.1\
@@ -149,6 +157,33 @@ xilinx.com:ip:zynq_ultra_ps_e:3.3\
       set bCheckIPsPassed 0
    }
 
+}
+
+##################################################################
+# CHECK Modules
+##################################################################
+set bCheckModules 1
+if { $bCheckModules == 1 } {
+   set list_check_mods "\ 
+fix_address\
+nn_ctrl\
+not_gate\
+"
+
+   set list_mods_missing ""
+   common::send_gid_msg -ssname BD::TCL -id 2020 -severity "INFO" "Checking if the following modules exist in the project's sources: $list_check_mods ."
+
+   foreach mod_vlnv $list_check_mods {
+      if { [can_resolve_reference $mod_vlnv] == 0 } {
+         lappend list_mods_missing $mod_vlnv
+      }
+   }
+
+   if { $list_mods_missing ne "" } {
+      catch {common::send_gid_msg -ssname BD::TCL -id 2021 -severity "ERROR" "The following module(s) are not found in the project: $list_mods_missing" }
+      common::send_gid_msg -ssname BD::TCL -id 2022 -severity "INFO" "Please add source files for the missing module(s) above."
+      set bCheckIPsPassed 0
+   }
 }
 
 if { $bCheckIPsPassed != 1 } {
@@ -197,6 +232,10 @@ proc create_root_design { parentCell } {
   # Create interface ports
 
   # Create ports
+  set led_ctrl1_0 [ create_bd_port -dir O led_ctrl1_0 ]
+  set led_ctrl2_0 [ create_bd_port -dir O led_ctrl2_0 ]
+  set led_ctrl3_0 [ create_bd_port -dir O led_ctrl3_0 ]
+  set led_ctrl4_0 [ create_bd_port -dir O led_ctrl4_0 ]
 
   # Create instance: axi_bram_ctrl_0, and set properties
   set axi_bram_ctrl_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_bram_ctrl:4.1 axi_bram_ctrl_0 ]
@@ -228,6 +267,45 @@ proc create_root_design { parentCell } {
    CONFIG.NUM_SI {1} \
  ] $axi_smc
 
+  # Create instance: fix_address_0, and set properties
+  set block_name fix_address
+  set block_cell_name fix_address_0
+  if { [catch {set fix_address_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $fix_address_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+    set_property -dict [ list \
+   CONFIG.nn_address_output_width {10} \
+ ] $fix_address_0
+
+  # Create instance: nn_ctrl_0, and set properties
+  set block_name nn_ctrl
+  set block_cell_name nn_ctrl_0
+  if { [catch {set nn_ctrl_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $nn_ctrl_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: nn_inference_0, and set properties
+  set nn_inference_0 [ create_bd_cell -type ip -vlnv xilinx.com:hls:nn_inference:1.0 nn_inference_0 ]
+
+  # Create instance: not_gate_0, and set properties
+  set block_name not_gate
+  set block_cell_name not_gate_0
+  if { [catch {set not_gate_0 [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $not_gate_0 eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
   # Create instance: rst_ps8_0_100M, and set properties
   set rst_ps8_0_100M [ create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 rst_ps8_0_100M ]
 
@@ -975,15 +1053,35 @@ proc create_root_design { parentCell } {
   connect_bd_intf_net -intf_net zynq_ultra_ps_e_0_M_AXI_HPM0_FPD [get_bd_intf_pins axi_smc/S00_AXI] [get_bd_intf_pins zynq_ultra_ps_e_0/M_AXI_HPM0_FPD]
 
   # Create port connections
-  connect_bd_net -net axi_intc_0_irq [get_bd_pins axi_intc_0/irq] [get_bd_pins xlconcat_0/In0]
+  connect_bd_net -net axi_bram_ctrl_0_bram_doutb [get_bd_pins axi_bram_ctrl_0_bram/doutb] [get_bd_pins nn_inference_0/input_img_q0]
+  connect_bd_net -net axi_bram_ctrl_0_bram_rstb_busy [get_bd_pins axi_bram_ctrl_0_bram/rstb_busy] [get_bd_pins nn_ctrl_0/rstb_busy]
+  connect_bd_net -net axi_intc_0_irq [get_bd_pins axi_intc_0/irq] [get_bd_pins xlconcat_0/In7]
+  connect_bd_net -net fix_address_0_addr_out [get_bd_pins fix_address_0/addr_out] [get_bd_pins nn_ctrl_0/i_BRAM_addr]
+  connect_bd_net -net nn_ctrl_0_ap_rst [get_bd_pins nn_ctrl_0/ap_rst] [get_bd_pins not_gate_0/i_in]
+  connect_bd_net -net nn_ctrl_0_ap_start [get_bd_pins nn_ctrl_0/ap_start] [get_bd_pins nn_inference_0/ap_start]
+  connect_bd_net -net nn_ctrl_0_led_ctrl1 [get_bd_ports led_ctrl1_0] [get_bd_pins nn_ctrl_0/led_ctrl1]
+  connect_bd_net -net nn_ctrl_0_led_ctrl2 [get_bd_ports led_ctrl2_0] [get_bd_pins nn_ctrl_0/led_ctrl2]
+  connect_bd_net -net nn_ctrl_0_led_ctrl3 [get_bd_ports led_ctrl3_0] [get_bd_pins nn_ctrl_0/led_ctrl3]
+  connect_bd_net -net nn_ctrl_0_led_ctrl4 [get_bd_ports led_ctrl4_0] [get_bd_pins nn_ctrl_0/led_ctrl4]
+  connect_bd_net -net nn_ctrl_0_o_BRAM_addr [get_bd_pins axi_bram_ctrl_0_bram/addrb] [get_bd_pins nn_ctrl_0/o_BRAM_addr]
+  connect_bd_net -net nn_ctrl_0_o_BRAM_ce [get_bd_pins axi_bram_ctrl_0_bram/enb] [get_bd_pins nn_ctrl_0/o_BRAM_ce]
+  connect_bd_net -net nn_ctrl_0_o_BRAM_din [get_bd_pins axi_bram_ctrl_0_bram/dinb] [get_bd_pins nn_ctrl_0/o_BRAM_din]
+  connect_bd_net -net nn_ctrl_0_o_BRAM_wr [get_bd_pins axi_bram_ctrl_0_bram/web] [get_bd_pins nn_ctrl_0/o_BRAM_wr]
+  connect_bd_net -net nn_inference_0_ap_done [get_bd_pins nn_ctrl_0/ap_done] [get_bd_pins nn_inference_0/ap_done]
+  connect_bd_net -net nn_inference_0_ap_idle [get_bd_pins nn_ctrl_0/ap_idle] [get_bd_pins nn_inference_0/ap_idle]
+  connect_bd_net -net nn_inference_0_ap_ready [get_bd_pins nn_ctrl_0/ap_ready] [get_bd_pins nn_inference_0/ap_ready]
+  connect_bd_net -net nn_inference_0_ap_return [get_bd_pins nn_ctrl_0/nn_res_in] [get_bd_pins nn_inference_0/ap_return]
+  connect_bd_net -net nn_inference_0_input_img_address0 [get_bd_pins fix_address_0/addr_in] [get_bd_pins nn_inference_0/input_img_address0]
+  connect_bd_net -net nn_inference_0_input_img_ce0 [get_bd_pins nn_ctrl_0/i_BRAM_ce] [get_bd_pins nn_inference_0/input_img_ce0]
+  connect_bd_net -net not_gate_0_o_out [get_bd_pins nn_inference_0/ap_rst] [get_bd_pins not_gate_0/o_out]
   connect_bd_net -net proc_sys_reset_0_peripheral_aresetn [get_bd_pins axi_bram_ctrl_0/s_axi_aresetn] [get_bd_pins axi_intc_0/s_axi_aresetn] [get_bd_pins axi_smc/aresetn] [get_bd_pins rst_ps8_0_100M/peripheral_aresetn]
   connect_bd_net -net xlconcat_0_dout [get_bd_pins xlconcat_0/dout] [get_bd_pins zynq_ultra_ps_e_0/pl_ps_irq0]
   connect_bd_net -net xlconstant_0_dout [get_bd_pins axi_intc_0/intr] [get_bd_pins xlconstant_0/dout]
-  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0_bram/clkb] [get_bd_pins axi_intc_0/s_axi_aclk] [get_bd_pins axi_smc/aclk] [get_bd_pins rst_ps8_0_100M/slowest_sync_clk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
+  connect_bd_net -net zynq_ultra_ps_e_0_pl_clk0 [get_bd_pins axi_bram_ctrl_0/s_axi_aclk] [get_bd_pins axi_bram_ctrl_0_bram/clkb] [get_bd_pins axi_intc_0/s_axi_aclk] [get_bd_pins axi_smc/aclk] [get_bd_pins nn_ctrl_0/i_Clk] [get_bd_pins nn_inference_0/ap_clk] [get_bd_pins rst_ps8_0_100M/slowest_sync_clk] [get_bd_pins zynq_ultra_ps_e_0/maxihpm0_fpd_aclk] [get_bd_pins zynq_ultra_ps_e_0/pl_clk0]
   connect_bd_net -net zynq_ultra_ps_e_0_pl_resetn0 [get_bd_pins rst_ps8_0_100M/ext_reset_in] [get_bd_pins zynq_ultra_ps_e_0/pl_resetn0]
 
   # Create address segments
-  assign_bd_address -offset 0xA0000000 -range 0x00002000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
+  assign_bd_address -offset 0xA0000000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_bram_ctrl_0/S_AXI/Mem0] -force
   assign_bd_address -offset 0xA0010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces zynq_ultra_ps_e_0/Data] [get_bd_addr_segs axi_intc_0/S_AXI/Reg] -force
 
 
