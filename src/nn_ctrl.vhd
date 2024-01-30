@@ -100,7 +100,7 @@ begin
         end if;
     END PROCESS;
 
-    o_BRAM_addr <= (30 => '1', 12 => '1', others => '0') when ap_done = '1' else i_BRAM_addr;
+    o_BRAM_addr <= (30 => '1', 9 => '1', others => '0') when ap_done = '1' else i_BRAM_addr;
     o_BRAM_ce   <= '1' when ap_done = '1' else i_BRAM_ce;
     o_BRAM_wr   <= "1111" when ap_done = '1' else "0000";
     o_BRAM_din  <= nn_res_in;
